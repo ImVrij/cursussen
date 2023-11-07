@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: frontend
+    labels:
+        app: frontend
+    namespace: example
+spec:
+    replicas: 2
+    strategy:
+        type: RollingUpdate
+        rollingUpdate:
+            maxUnavailable: 25%
+            maxSurge: 1
+    selector:
+        matchLabels:
+            app: frontend
+    template:
+        metadata:
+            labels:
+                app: frontend
+        spec:
+            containers:
+                - name: frontend-service
+                  image: thoughts_frontend:v3.7
+                  imagePullPolicy: Never
+                  ports:
+                      - containerPort: 8000
+                  envFrom:
+                      - configMapRef:
+                            name: shared-config
+                  volumeMounts:
+                      - name: public-key
+                        mountPath: "/opt/keys/"
+                  livenessProbe:
+                      exec:
+                          command:
+                              - curl
+                              - http://localhost:8000/
+                      initialDelaySeconds: 5
+                      periodSeconds: 30
+                  readinessProbe:
+                      exec:
+                          command:
+                              - curl
+                              - http://localhost:8000/
+                      initialDelaySeconds: 5
+                      periodSeconds: 30
+            volumes:
+                - name: public-key
+                  configMap:
+                      name: shared-config
+                      items:
+                          - key: public_key.pub
+                            path: public_key.pub

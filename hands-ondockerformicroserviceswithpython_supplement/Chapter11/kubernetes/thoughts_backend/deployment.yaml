@@ -1,0 +1,50 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: thoughts-backend
+    labels:
+        app: thoughts-backend
+    namespace: example
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: thoughts-backend
+    template:
+        metadata:
+            labels:
+                app: thoughts-backend
+        spec:
+            containers:
+                - name: thoughts-backend-service
+                  image: thoughts_server:v1.5
+                  imagePullPolicy: Never
+                  ports:
+                      - containerPort: 8000
+                  envFrom:
+                      - configMapRef:
+                            name: shared-config
+                  env:
+                      - name: POSTGRES_DB
+                        value: thoughts
+                      - name: POSTGRES_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: thoughts-secrets
+                                key: postgres-password
+                  volumeMounts:
+                      - name: public-key
+                        mountPath: "/opt/keys/"
+
+
+                - name: thoughts-backend-db
+                  image: thoughts_backend_db:latest
+                  imagePullPolicy: Never
+            volumes:
+                - name: public-key
+                  secret:
+                      secretName: thoughts-secrets
+                      items:
+                          - key: public_key.pub
+                            path: public_key.pub

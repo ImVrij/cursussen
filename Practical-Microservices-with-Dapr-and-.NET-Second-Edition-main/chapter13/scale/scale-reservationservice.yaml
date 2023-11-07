@@ -1,0 +1,16 @@
+properties:
+  template:
+    scale:
+      minReplicas: 2
+      maxReplicas: 8
+      rules:
+      - name: servicebus
+        custom:
+          type: azure-servicebus
+          metadata:
+            topicName: onorder_submitted
+            subscriptionName: reservation-service
+            messageCount: 10
+          auth:
+            - secretRef: pubsub-secret
+              triggerParameter: connection

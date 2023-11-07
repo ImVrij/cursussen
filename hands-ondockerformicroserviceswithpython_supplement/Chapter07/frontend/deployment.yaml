@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: frontend
+    labels:
+        app: frontend
+    namespace: example
+spec:
+    replicas: 4
+    strategy:
+        type: RollingUpdate
+        rollingUpdate:
+            maxUnavailable: 25%
+            maxSurge: 1
+    selector:
+        matchLabels:
+            app: frontend
+    template:
+        metadata:
+            labels:
+                app: frontend
+        spec:
+            containers:
+                - name: frontend-service
+                  image: 033870383707.dkr.ecr.us-west-2.amazonaws.com/frontend:latest
+                  imagePullPolicy: Always
+                  ports:
+                      - containerPort: 8000
+                  env:
+                      - name: THOUGHTS_BACKEND_URL
+                        value: http://thoughts-service
+                      - name: USER_BACKEND_URL
+                        value: http://users-service
+                  livenessProbe:
+                      exec:
+                          command:
+                              - curl
+                              - http://localhost:8000/
+                      initialDelaySeconds: 5
+                      periodSeconds: 30
+                  readinessProbe:
+                      exec:
+                          command:
+                              - curl
+                              - http://localhost:8000/
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+                  resources:
+                      requests:
+                          memory: "64Mi"
+                          cpu: "60m"
+                      limits:
+                          memory: "128Mi"
+                          cpu: "70m"

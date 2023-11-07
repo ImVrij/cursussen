@@ -1,0 +1,12 @@
+properties:
+  template:
+    scale:
+      minReplicas: 3
+      maxReplicas: 10
+      rules:
+      - name: memoryscalerule
+        custom:
+          type: memory
+          metadata:
+            type: utilization
+            value: 50

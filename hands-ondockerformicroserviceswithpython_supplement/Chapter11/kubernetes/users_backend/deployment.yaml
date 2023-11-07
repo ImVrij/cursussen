@@ -1,0 +1,52 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: users-backend
+    labels:
+        app: users-backend
+    namespace: example
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: users-backend
+    template:
+        metadata:
+            labels:
+                app: users-backend
+        spec:
+            containers:
+                - name: users-backend-service
+                  image: users_server:v2.3
+                  imagePullPolicy: Never
+                  ports:
+                      - containerPort: 8000
+                  envFrom:
+                      - configMapRef:
+                            name: shared-config
+                  env:
+                      - name: POSTGRES_DB
+                        value: thoughts
+                      - name: POSTGRES_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: thoughts-secrets
+                                key: postgres-password
+                  volumeMounts:
+                      - name: sign-keys
+                        mountPath: "/opt/keys/"
+
+                - name: users-backend-db
+                  image: users_backend_db:latest
+                  imagePullPolicy: Never
+
+            volumes:
+                - name: sign-keys
+                  secret:
+                      secretName: thoughts-secrets
+                      items:
+                          - key: public_key.pub
+                            path: public_key.pub
+                          - key: private_key.pem
+                            path: private_key.pem
